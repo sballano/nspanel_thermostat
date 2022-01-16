@@ -1,12 +1,12 @@
 # Hardware modification
 
-**Warning:** this doesn't pretend to be a "how-to" guide, I just documented the process I followed and it may serve as reference for anybody else with enough tecnical knowledge and experience. A lot of these steps are difficult and dangerous to perform and the problems can manifest after several months working fine.
+**Warning:** this doesn't pretend to be a "how-to" guide, I just documented the process I followed and it may serve as reference for anybody else with enough technical knowledge and experience. A lot of these steps are difficult and dangerous to perform and the problems can manifest after several months working fine.
 
 ## Moving the NTC sensor outside the enclosure
 
-Giving the constranis of the product I think the location of the NTC is good, in the botton of the enclosure will get the least ammount of heat, but unfortunatelly there is enough heat from the screen that makes its way to the NTC to cause quite a bit of error in the reading.
+Giving the constrains of the product I think the location of the NTC is good, in the bottom of the enclosure will get the least amount of heat, but unfortunately there is enough heat from the screen that makes its way to the NTC to cause quite a bit of error in the reading.
 
-They can't sell a product that has a sensor with just two wires hanging out... but we can mod it! Just make sure nobody else touchs or pulls on it... maybe this is not a mod for every household, so be mindful of that.
+They can't sell a product that has a sensor with just two wires hanging out... but we can mod it! Just make sure nobody else touches or pulls on it... maybe this is not a mod for every household, so be mindful of that.
 
 This is what the NTC looks from outside, notice how part of the NTC body is inside the plastic enclosure and how it is touching it so, even if plastic is a bad conductor of heat, in the end the screen heat reaches the NTC.
 
@@ -20,7 +20,7 @@ Use small gauge wires (AWG24 in the picture) to be able to extend the sensor con
 
 ![Wires attached](img/doc/03_wires_attached.jpg)
 
-Use a small diameter shirnk wrap to protect the wires from shorting out, this is important, if the sensor shorts out the thermostat won't operate.
+Use a small diameter shrink wrap to protect the wires from shorting out, this is important, if the sensor shorts out the thermostat won't operate.
 
 Place the NTC in the hole and the PCB in place, solder both connections and cut the excess wire.
 
@@ -63,11 +63,11 @@ The best way to do this is by using a rotary tool but beware, this will create a
 
 ![Cutting the trace](img/doc/13_cutting_trace_dust.jpg)
 
-The circuit must be cleaned as best as possible, the two sides of the trace have to be completely isolated, so it is recommended to have an openning of 4mm or more, also the opening has to be wider than the trace itself in both sides. Make sure the edges of the PCB don't have any kind of metal shaving. Cleaning the edges with a razor blade is recommended.
+The circuit must be cleaned as best as possible, the two sides of the trace have to be completely isolated, so it is recommended to have an opening of 4mm or more, also the opening has to be wider than the trace itself in both sides. Make sure the edges of the PCB don't have any kind of metal shaving. Cleaning the edges with a razor blade is recommended.
 
 ![Trace cut bottom](img/doc/14_trace_cut_bottom.jpg)
 
-This is the cut viewed from the top side, inspect and clean the cut in both sides. Use isopropylic alcohol to clean the PCB and all the dust.
+This is the cut viewed from the top side, inspect and clean the cut in both sides. Use isopropyl alcohol to clean the PCB and all the dust.
 
 ![Trace cut top](img/doc/15_trace_cut_top.jpg)
 

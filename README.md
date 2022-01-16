@@ -18,19 +18,19 @@ It can also be used as a starting point for any other project using the NSPanel,
 
 # Notes about the hardware
 
-The Sonoff NSPanel is a nice compact device that with custom firmware can be used for multiple home automation task or general user interface. Unfortunatelly it is not the best device to build a thermostat!
+The Sonoff NSPanel is a nice compact device that with custom firmware can be used for multiple home automation task or general user interface. Unfortunately it is not the best device to build a thermostat!
 
 A thermostat is basically composed of a temperature sensor, a switch and a controller. From those three elements, the NSPanel has problems both on the sensor and the switches.
 
 ## Temperature sensor
 
-The sensor is a NTC located in the bottom of the panel, poking through a small hole so it can probe fresh air. Unfortunatelly the heat from the device is enough to affect the reading.
+The sensor is a NTC located in the bottom of the panel, poking through a small hole so it can probe fresh air. Unfortunately the heat from the device is enough to affect the reading.
 
-With the screen switched off the temperature reading is at least 0.5ºC more than expedted, probably higher. With the screen at full brightness the error can increase to about 4ºC.
+With the screen switched off the temperature reading is at least 0.5ºC more than expected, probably higher. With the screen at full brightness the error can increase to about 4ºC.
 
-A way to correct this is to use an external sensor, something you may already have at home, like typical Zigbee temperature/humidity sensors. But if you go this route, know that these sensors are not developed to be used in control loops, they don't provide constant/predictible update intervals. Also the battery could die or have a problem in your Home Assistant that makes communication impossible. In this case you would need some way to detect this and avoid the thermostat getting stuck in a potentiallly dangerous situation.
+A way to correct this is to use an external sensor, something you may already have at home, a lot of people have Zigbee temperature/humidity sensors already at home. But if you go this route, know that these sensors are not the best to be used in control loops, they don't provide constant/predictible update intervals. Also the battery could die or have a problem in your Home Assistant that makes communication impossible. In this case you would need some way to detect this and avoid the thermostat getting stuck in a potentially dangerous situation.
 
-Another way to fix the sensor issue is to modify the hardware so the sensor is slightly outside the enclosure. This way we maintain the whole control in one unit so it is less likely to fail... But this modification has risks in itself, you can damage your panel or have a bad solder that manifest later leading to the same issue of having the thermostat stuck in an open or close position.
+Another way to fix the sensor issue is to modify the hardware so the sensor is slightly outside the enclosure. This way we maintain the whole control in one unit so it is less likely to fail... But this modification has risks in itself, you can damage your panel or have a bad solder that manifests later leading to the same issue of having the thermostat stuck in an open or close position.
 
 You can find a more extensive information [here](hardware_mods.md) about what are the modifications required to improve the sensor readings.
 
@@ -42,7 +42,7 @@ Sonoff clearly states in its webpage this device can be used as a thermostat, bu
 
 Typical gas boilers don't expect to have Line connected to the thermostat contacts. Usually these are a potential free (or "dry") contacts that can be switched by a mechanical or battery operated thermostat.
 
-This are the usual terminals you would expect to see in a wifi gas boiler thermostat:
+This are the usual terminals you would expect to see in a WiFi gas boiler thermostat:
 
 ![Thermostat with dry contacts](img/doc/dry_contact_switch.png "Thermostat with dry contacts")
 
@@ -79,7 +79,7 @@ You will need to edit the YAML file to match your particular Home Assistant conf
 
 You can also choose to change the temperature sensor used to regulate the thermostat to an external sensor.
 
-Beware that this will mean the thermostat is no longer "self conained", if your Home Assistant or you wifi fail your thermostat will no longer operate. This would lead to the contact being constantly open or constantly closed which could leat to a potentially dangerous situation.
+Beware that this will mean the thermostat is no longer "self contained", if your Home Assistant or you wifi fail your thermostat will no longer operate. This would lead to the contact being constantly open or constantly closed which could leat to a potentially dangerous situation.
 
 It could be made that if the sensor is not updated in a certain time the thermostat reverts back to the internal sensor, gives an alarm and is switched to a safe state.
 
@@ -133,7 +133,7 @@ The icons used for the current weather are slightly modified versions of the [We
 
 Both US and EU version use the same TFT screen with a resolution of 480x320, but you will have noticed that they have different sizes.
 
-The visible resolution in the EU version is only about 452x320, this is because part of the screen is actually occluded by the bezzel and this is why the background image has a vertical black bar so the unused screen space doesn't distract the user trying to see under the bezzel.
+The visible resolution in the EU version is only about 452x320, this is because part of the screen is actually occluded by the bezel and this is why the background image has a vertical black bar so the unused screen space doesn't distract the user trying to see under the bezel.
 
 ## Display sleep
 
