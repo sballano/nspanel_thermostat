@@ -30,6 +30,9 @@ wifi:
     
 # Enable logging
 logger:
+  level: DEBUG
+  logs:
+    sensor: ERROR
 
 # Enable wireless updates
 ota:
@@ -63,44 +66,10 @@ time:
         minutes: '*'
         then:
           - lambda: |-
-              id(disp1).set_component_text_printf("wind", "%i km/h", (int)id(wind_speed).state);
+              id(disp1).set_component_text_printf("page0.wind", "%i km/h", (int)id(wind_speed).state);
           - script.execute: tft_date_update
           - script.execute: tft_time_update
           - script.execute: tft_weather_update
-
-      # just a little showcase of all the icons
-#      - seconds: /2
-#        then:
-#          - lambda: |-
-#              static int num = 3;
-#              if (num < 12) num++; else num = 3;
-#              id(disp1).send_command_printf("weather.pic=%i", num);
-
-globals:
-  - id: str_date
-    type: char[16]
-    restore_value: false
-    initial_value: ""
-  - id: str_time
-    type: char[16]
-    restore_value: false
-    initial_value: ""
-  - id: str_weather
-    type: char[16]
-    restore_value: false
-    initial_value: ""
-  - id: str_wind
-    type: char[16]
-    restore_value: false
-    initial_value: ""
-  - id: str_ext_temp
-    type: char[16]
-    restore_value: false
-    initial_value: ""
-  - id: str_int_temp
-    type: char[16]
-    restore_value: false
-    initial_value: ""
     
 # A reboot button is always useful
 button:
@@ -122,14 +91,15 @@ binary_sensor:
             mode: !lambda |-
               if (id(caldera).mode==CLIMATE_MODE_OFF)
               {
-                id(disp1).set_component_text_printf("btn0", "APAGAR");
+                id(disp1).set_component_text_printf("page0.btn0", "APAGAR");
                 return CLIMATE_MODE_HEAT;
               }
               else
               {
-                id(disp1).set_component_text_printf("btn0", "ENCENDER");
+                id(disp1).set_component_text_printf("page0.btn0", "ENCENDER");
                 return CLIMATE_MODE_OFF;
               }
+        - script.execute: tft_wake_up
 
   # Switches between a predefined "night" or "away" target temperature and a "normal" target temperature
   # this will be also automated in homeassistant, but it is nice to have a button for it
@@ -145,14 +115,15 @@ binary_sensor:
             preset: !lambda |-
               if (id(caldera).preset==CLIMATE_PRESET_AWAY)
               {
-                id(disp1).set_component_text_printf("btn1", "MODO NORMAL");
+                id(disp1).set_component_text_printf("page0.btn1", "MODO NORMAL");
                 return CLIMATE_PRESET_HOME;
               }
               else
               {
-                id(disp1).set_component_text_printf("btn1", "MODO NOCHE");
+                id(disp1).set_component_text_printf("page0.btn1", "MODO NOCHE");
                 return CLIMATE_PRESET_AWAY;
               }
+        - script.execute: tft_wake_up
 
   - platform: nextion
     name: $device_name Up Button
@@ -163,8 +134,6 @@ binary_sensor:
         - climate.control:
             id: caldera
             target_temperature: !lambda "return id(caldera).target_temperature + 0.1;"
-        - script.execute: tft_sleep_timeout
-
 
   - platform: nextion
     name: $device_name Down Button
@@ -175,90 +144,6 @@ binary_sensor:
         - climate.control:
             id: caldera
             target_temperature: !lambda "return id(caldera).target_temperature - 0.1;"
-        - script.execute: tft_sleep_timeout
-
-  # This is a workaround to get the sleep timeout working
-  # ideally it should be handled by the 'touch_sleep_timeout' variable
-  - platform: nextion
-    name: $device_name bg0
-    page_id: 0
-    component_id: 1
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name intTemp
-    page_id: 0
-    component_id: 2
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name extTemp
-    page_id: 0
-    component_id: 3
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name time
-    page_id: 0
-    component_id: 4
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name setTemp
-    page_id: 0
-    component_id: 5
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name date
-    page_id: 0
-    component_id: 8
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name wind
-    page_id: 0
-    component_id: 9
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name weather
-    page_id: 0
-    component_id: 10
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name btn0
-    page_id: 0
-    component_id: 11
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout
-  - platform: nextion
-    name: $device_name btn1
-    page_id: 0
-    component_id: 12
-    internal: true
-    on_press:
-      then:
-        - script.execute: tft_sleep_timeout      
 
 sensor:
   - platform: wifi_signal
@@ -293,10 +178,7 @@ sensor:
     name: $device_name Temperature
     on_value:
       then:
-        - lambda: |-
-            char *strit = id(str_int_temp);
-            sprintf(strit, "%.1f""\xb0", x);
-            id(disp1).set_component_text_printf("intTemp", id(str_int_temp));
+        - lambda: 'id(disp1).set_component_text_printf("page0.intTemp", "%.1f""\xb0", x);'
 
   # Grab current temperature from Home Assistant
   - platform: homeassistant
@@ -305,10 +187,7 @@ sensor:
     attribute: temperature
     on_value:
       then:
-        - lambda: |-
-            char *stret = id(str_ext_temp);
-            sprintf(stret, "%.1f""\xb0", x);
-            id(disp1).set_component_text_printf("extTemp", id(str_ext_temp));
+        - lambda: 'id(disp1).set_component_text_printf("page0.extTemp", "%.1f""\xb0", x);'
 
   - platform: homeassistant
     id: wind_speed
@@ -317,10 +196,15 @@ sensor:
     unit_of_measurement: "km/h"
     on_value:
       then:
-        - lambda: |-
-            char *strwind = id(str_wind);
-            sprintf(strwind, "%i km/h""\xb0", (int)id(wind_speed).state);
-            id(disp1).set_component_text_printf("wind", id(str_wind));
+        - lambda: 'id(disp1).set_component_text_printf("page0.wind", "%i km/h""\xb0", (int)id(wind_speed).state);'
+
+  - platform: nextion
+    id: current_page
+    name: "current_page"
+    internal: true
+    accuracy_decimals: 0
+    variable_name: dp
+    update_interval: 1s
 
 text_sensor:
   - platform: homeassistant
@@ -339,8 +223,8 @@ script:
                                 "pouring", "rainy", "snowy", "sunny"};
           int i = 0;
           while ((id(current_weather).state!=wstr[i])&&(i<12)) {i++;}
-          id(disp1).send_command_printf("weather.pic=%i", i+3);
-          id(disp1).set_component_text_printf("wind", "%i km/h", (int)id(wind_speed).state);
+          id(disp1).send_command_printf("page0.weather.pic=%i", i+3);
+          id(disp1).set_component_text_printf("page0.wind", "%i km/h", (int)id(wind_speed).state);
   - id: tft_date_update
     then:
       - lambda: |-
@@ -348,25 +232,18 @@ script:
           int mes = id(homeassistant_time).now().month;
           char const *dia_semana[] = {"Domingo", "Lunes", "Martes", "Mierco.", "Jueves", "Viernes", "Sabado"};
           const char *str = dia_semana[id(homeassistant_time).now().day_of_week-1]; // range [1-7], Domingo=1
-          char *strd = id(str_date);
-          sprintf(strd, "%s %02i/%02i", str, dia, mes);
-          id(disp1).set_component_text_printf("date", id(str_date));
+          id(disp1).set_component_text_printf("page0.date", "%s %02i/%02i", str, dia, mes);
   - id: tft_time_update
     then:
-      - lambda: |-
-          char *strt = id(str_time);
-          sprintf(strt, "%s", id(homeassistant_time).now().strftime("%H:%M").c_str());
-          id(disp1).set_component_text_printf("time", id(str_time));
-  - id: tft_sleep_timeout
-    mode: restart
+      - lambda: 'id(disp1).set_component_text_printf("page0.time", "%s", id(homeassistant_time).now().strftime("%H:%M").c_str());'
+  - id: tft_wake_up
     then:
-      if:
-        condition:
-          switch.is_on: auto_sleep
-        then:
-          - delay: 30 s
-          - lambda: |-
-              id(disp1).send_command_printf("sleep=1");
+      - lambda: |-
+          id(disp1).send_command_printf("page0.sleep_cnt.val=page0.sleep_timeout.val");
+          id(disp1).send_command_printf("page0.sleep_timer.en=1");
+          if (id(current_page).state!=0)
+            id(disp1).send_command_printf("page 0");
+          id(disp1).send_command_printf("dim=page0.brightness.val");
 
 # Define some outputs
 switch:
@@ -390,18 +267,13 @@ switch:
   - platform: template
     name: $device_name auto sleep
     id: auto_sleep
+    entity_category: config
     restore_state: true
     optimistic: true
     on_turn_on:
-      - script.execute: tft_sleep_timeout
+      - lambda: 'id(disp1).send_command_printf("page0.disable_sleep.val=0");'
     on_turn_off:
-      - script.stop: tft_sleep_timeout
-      - lambda: 'id(disp1).send_command_printf("sleep=0");'
-    turn_on_action:
-      - script.execute: tft_sleep_timeout
-    turn_off_action:
-      - script.stop: tft_sleep_timeout
-      - lambda: 'id(disp1).send_command_printf("sleep=0");'
+      - lambda: 'id(disp1).send_command_printf("page0.disable_sleep.val=1");'
 
 number:
   - platform: template
@@ -416,7 +288,29 @@ number:
     initial_value: 30
     set_action:
       then:
-        - lambda: 'id(disp1).set_backlight_brightness(x/100);'
+        - lambda: |-
+            id(disp1).send_command_printf("page0.sleep_timer.en=1");
+            if (id(current_page).state!=0)
+              id(disp1).send_command_printf("page 0");
+            id(disp1).set_backlight_brightness(x/100);
+  # Sets the sleep timer value
+  # requires code running in the nextion tft to make a 1 second period timer
+  # with a counter and a variable to store the timeout
+  - platform: template
+    name: $device_name Sleep timeout
+    id: sleep_timeout
+    entity_category: config
+    unit_of_measurement: 's'
+    icon: "mdi:timer"
+    min_value: 3
+    max_value: 300
+    step: 1
+    initial_value: 30
+    set_action:
+      then:
+        - lambda: |-
+            id(disp1).send_command_printf("page0.sleep_timeout.val=%i", (int)x);  // set the timeout
+            id(disp1).send_command_printf("page0.sleep_cnt.val=%i", (int)x);      // reset the counter to its maximum
 
 # Configure the internal bleeper
 output:
@@ -443,19 +337,6 @@ display:
     id: disp1
     uart_id: tf_uart
     tft_url: !secret panel_file
-    touch_sleep_timeout: 30 # does not seem to work... we will do it with a script
-    auto_wake_on_touch: true
-    on_wake:
-      then:
-        - lambda: |-
-            id(disp1).set_component_text_printf("extTemp", id(str_ext_temp));
-            id(disp1).set_component_text_printf("intTemp", id(str_int_temp));
-            id(disp1).set_component_text_printf("wind", id(str_wind));
-            id(disp1).set_component_text_printf("setTemp", "%.1f""\xb0", id(caldera).target_temperature);
-        - script.execute: tft_date_update
-        - script.execute: tft_time_update
-        - script.execute: tft_weather_update
-        - script.execute: tft_sleep_timeout
     on_setup:
       then:
         - number.set:
@@ -463,16 +344,14 @@ display:
             value: 30
         - lambda: |-
             id(disp1).set_component_text_printf(
-              "intTemp", "%.1f""\xb0", id(temperature).state);
+              "page0.intTemp", "%.1f""\xb0", id(temperature).state);
             id(disp1).set_component_text_printf(
-              "extTemp", "%.1f""\xb0", id(ext_temperature).state);
-            id(disp1).set_component_text_printf("btn0", "ENCENDER");
-            id(disp1).set_component_text_printf("btn1", "MODO NOCHE");
+              "page0.extTemp", "%.1f""\xb0", id(ext_temperature).state);
+            id(disp1).set_component_text_printf("page0.btn0", "ENCENDER");
+            id(disp1).set_component_text_printf("page0.btn1", "MODO NOCHE");
         - script.execute: tft_date_update
         - script.execute: tft_time_update
         - script.execute: tft_weather_update
-        - switch.turn_on: auto_sleep
-        - script.execute: tft_sleep_timeout
 
 #        - rtttl.play: "twobits:d=4,o=5,b=220:c6,8g,8g,a,g,p,b,c6"
 
@@ -493,15 +372,10 @@ climate:
     idle_action:
       - switch.turn_off: relay_2
     on_state:
-      - lambda: 'id(disp1).set_component_text_printf("setTemp", "%.1f""\xb0", id(caldera).target_temperature);'
+      - lambda: 'id(disp1).set_component_text_printf("page0.setTemp", "%.1f""\xb0", id(caldera).target_temperature);'
     visual:
       min_temperature: 10
       max_temperature: 30
       temperature_step: 0.1
     away_config:
       default_target_temperature_low: $target_temp_away
-
-
-
-
-

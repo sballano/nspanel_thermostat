@@ -137,4 +137,8 @@ The visible resolution in the EU version is only about 452x320, this is because 
 
 ## Display sleep
 
-It seems that the ESPHome feature of 'touch_sleep_timeout' does not work properly (or I have not done it correctly) so instead I have set all the objects in the display to send a 'PRESS' event. This event can be read by ESPHome and trigger a sleep timeout, achieving the same functionality.
+Nextion's has its own sleep feature, but it is quite problematic. You can't update any object while the screen is in sleep mode, which forces you to refresh the screen after wake-up. This refresh takes more than a second and it's very noticeable.
+
+Instead, we will be switching off the screen backlight and swithing to a "screensaver" page as suggested by [Masto in this video](https://www.youtube.com/watch?v=aNVGZDUKtuI).
+
+As a bonus, we introduce some code in the nextion tft so the sleep timer is not counting in milliseconds but in seconds. This allows for longer times, as otherwise it would be limited to 65 seconds.
