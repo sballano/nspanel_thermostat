@@ -2,15 +2,8 @@
 substitutions:
   node_name: nspanel
   device_name: NSPanel
-  target_temp_normal: 21.0 °C
-  target_temp_away: 18.0 °C
-
-# Note: this may not be needed if the pull request has been merged.
-# Check https://github.com/esphome/esphome/pull/2956 for current status.
-external_components:
-  - source: github://pr#2956
-    components: [nextion]
-    refresh: 1h
+  target_temp_home: 21.0 °C
+  target_temp_eco: 18.0 °C
 
 esphome:
   name: $node_name
@@ -65,8 +58,6 @@ time:
       - seconds: 0
         minutes: '*'
         then:
-          - lambda: |-
-              id(disp1).set_component_text_printf("page0.wind", "%i km/h", (int)id(wind_speed).state);
           - script.execute: tft_date_update
           - script.execute: tft_time_update
           - script.execute: tft_weather_update
@@ -91,17 +82,15 @@ binary_sensor:
             mode: !lambda |-
               if (id(caldera).mode==CLIMATE_MODE_OFF)
               {
-                id(disp1).set_component_text_printf("page0.btn0", "APAGAR");
                 return CLIMATE_MODE_HEAT;
               }
               else
               {
-                id(disp1).set_component_text_printf("page0.btn0", "ENCENDER");
                 return CLIMATE_MODE_OFF;
               }
         - script.execute: tft_wake_up
 
-  # Switches between a predefined "night" or "away" target temperature and a "normal" target temperature
+  # Switches between a predefined "night" or "sleep" target temperature and a "normal" target temperature
   # this will be also automated in homeassistant, but it is nice to have a button for it
   - platform: gpio
     name: $device_name Right Button
@@ -113,15 +102,13 @@ binary_sensor:
         - climate.control:
             id: caldera
             preset: !lambda |-
-              if (id(caldera).preset==CLIMATE_PRESET_AWAY)
+              if (id(caldera).preset==CLIMATE_PRESET_ECO)
               {
-                id(disp1).set_component_text_printf("page0.btn1", "MODO NORMAL");
                 return CLIMATE_PRESET_HOME;
               }
               else
               {
-                id(disp1).set_component_text_printf("page0.btn1", "MODO NOCHE");
-                return CLIMATE_PRESET_AWAY;
+                return CLIMATE_PRESET_ECO;
               }
         - script.execute: tft_wake_up
 
@@ -148,7 +135,24 @@ binary_sensor:
 sensor:
   - platform: wifi_signal
     name: $device_name WiFi Signal
+    id: wifi_rssi
     update_interval: 60s
+    on_value:
+      # Push it to the display
+      # RSSI is negative
+      #  -0 - -50 => excellent  - wlan4 - pic id 21
+      # -50 - -60 => good       - wlan3 - pic id 20
+      # -60 - -70 => fair       - wlan2 - pic id 19
+      # -70 - -85 => weak       - wlan1 - pic id 18
+      # -85 - -90 => offline    - wlan0 - pic id 17
+      then:
+        - lambda: |-
+            if  (id(wifi_rssi).state >= -50) {                                  id(disp1).set_component_pic("page0.picSignal", 21); }
+            if ((id(wifi_rssi).state <  -50) && (id(wifi_rssi).state >= -60)) { id(disp1).set_component_pic("page0.picSignal", 20); }
+            if ((id(wifi_rssi).state <  -60) && (id(wifi_rssi).state >= -70)) { id(disp1).set_component_pic("page0.picSignal", 19); }
+            if ((id(wifi_rssi).state <  -70) && (id(wifi_rssi).state >= -85)) { id(disp1).set_component_pic("page0.picSignal", 18); }
+            if  (id(wifi_rssi).state <  -85) {                                  id(disp1).set_component_pic("page0.picSignal", 17); }
+# from https://github.com/darktim/ESPHome-NSPanel/blob/main/WiFi-Indicator.md
 
   - platform: adc
     id: ntc_source
@@ -206,6 +210,9 @@ sensor:
     variable_name: dp
     update_interval: 1s
 
+  - platform: uptime
+    name: Uptime Sensor
+
 text_sensor:
   - platform: homeassistant
     id: current_weather
@@ -222,17 +229,24 @@ script:
                                 "lightning", "lightning-rainy", "partlycloudy",\
                                 "pouring", "rainy", "snowy", "sunny"};
           int i = 0;
-          while ((id(current_weather).state!=wstr[i])&&(i<12)) {i++;}
-          id(disp1).send_command_printf("page0.weather.pic=%i", i+3);
-          id(disp1).set_component_text_printf("page0.wind", "%i km/h", (int)id(wind_speed).state);
+          if (id(current_weather).state=="unknown") return;
+          while ((id(current_weather).state!=wstr[i])&&(i<9)) {i++;}
+          if ((i>0)&&(i<10))
+          {
+            id(disp1).send_command_printf("page0.weather.pic=%i", i+3);
+            id(disp1).set_component_text_printf("page0.wind", "%i km/h", (int)id(wind_speed).state);
+          }
   - id: tft_date_update
     then:
       - lambda: |-
           int dia = id(homeassistant_time).now().day_of_month;
           int mes = id(homeassistant_time).now().month;
-          char const *dia_semana[] = {"Domingo", "Lunes", "Martes", "Mierco.", "Jueves", "Viernes", "Sabado"};
-          const char *str = dia_semana[id(homeassistant_time).now().day_of_week-1]; // range [1-7], Domingo=1
-          id(disp1).set_component_text_printf("page0.date", "%s %02i/%02i", str, dia, mes);
+          if ((dia>0)&&(dia<7)&&(mes>0)&&(mes<13))
+          {
+            char const *dia_semana[] = {"Domingo", "Lunes", "Martes", "Mierco.", "Jueves", "Viernes", "Sabado"};
+            const char *str = dia_semana[id(homeassistant_time).now().day_of_week-1]; // range [1-7], Domingo=1
+            id(disp1).set_component_text_printf("page0.date", "%s %02i/%02i", str, dia, mes);
+          }
   - id: tft_time_update
     then:
       - lambda: 'id(disp1).set_component_text_printf("page0.time", "%s", id(homeassistant_time).now().strftime("%H:%M").c_str());'
@@ -268,7 +282,7 @@ switch:
     name: $device_name auto sleep
     id: auto_sleep
     entity_category: config
-    restore_state: true
+    restore_mode: ALWAYS_ON
     optimistic: true
     on_turn_on:
       - lambda: 'id(disp1).send_command_printf("page0.disable_sleep.val=0");'
@@ -335,6 +349,7 @@ uart:
 display:
   - platform: nextion
     id: disp1
+    exit_reparse_on_start: true
     uart_id: tf_uart
     tft_url: !secret panel_file
     on_setup:
@@ -348,7 +363,7 @@ display:
             id(disp1).set_component_text_printf(
               "page0.extTemp", "%.1f""\xb0", id(ext_temperature).state);
             id(disp1).set_component_text_printf("page0.btn0", "ENCENDER");
-            id(disp1).set_component_text_printf("page0.btn1", "MODO NOCHE");
+            id(disp1).set_component_text_printf("page0.btn1", "MODO ECO");
         - script.execute: tft_date_update
         - script.execute: tft_time_update
         - script.execute: tft_weather_update
@@ -361,7 +376,13 @@ climate:
     id: caldera
     name:  $device_name Thermostat
     sensor: temperature
-    default_target_temperature_low: $target_temp_normal
+    preset:
+      # Sleep temperature
+      - name: eco
+        default_target_temperature_low: $target_temp_eco
+      # Normal heating temperature
+      - name: home
+        default_target_temperature_low: $target_temp_home
     heat_deadband: 0.2
     heat_overrun: 0.2
     min_heating_off_time: 300s
@@ -372,10 +393,24 @@ climate:
     idle_action:
       - switch.turn_off: relay_2
     on_state:
-      - lambda: 'id(disp1).set_component_text_printf("page0.setTemp", "%.1f""\xb0", id(caldera).target_temperature);'
+      - lambda: |- 
+          id(disp1).set_component_text_printf("page0.setTemp", "%.1f""\xb0", id(caldera).target_temperature);
+
+          if (id(caldera).mode==CLIMATE_MODE_OFF)
+            id(disp1).set_component_text_printf("page0.btn0", "ENCENDER");
+          else
+            id(disp1).set_component_text_printf("page0.btn0", "APAGAR");
+
+          if (id(caldera).preset==CLIMATE_PRESET_ECO)
+            id(disp1).set_component_text_printf("page0.btn1", "MODO ECO");
+          else
+            id(disp1).set_component_text_printf("page0.btn1", "MODO NORMAL");
+
+          if (id(caldera).action==CLIMATE_ACTION_HEATING)
+            id(disp1).set_component_pic("page0.picBurn", 13); 
+          else
+            id(disp1).set_component_pic("page0.picBurn", 22);
     visual:
       min_temperature: 10
       max_temperature: 30
       temperature_step: 0.1
-    away_config:
-      default_target_temperature_low: $target_temp_away
