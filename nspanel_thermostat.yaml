@@ -241,7 +241,7 @@ script:
       - lambda: |-
           int dia = id(homeassistant_time).now().day_of_month;
           int mes = id(homeassistant_time).now().month;
-          if ((dia>0)&&(dia<7)&&(mes>0)&&(mes<13))
+          if ((dia>0)&&(dia<32)&&(mes>0)&&(mes<13))
           {
             char const *dia_semana[] = {"Domingo", "Lunes", "Martes", "Mierco.", "Jueves", "Viernes", "Sabado"};
             const char *str = dia_semana[id(homeassistant_time).now().day_of_week-1]; // range [1-7], Domingo=1
